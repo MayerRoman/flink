@@ -17,6 +17,7 @@
  */
 package org.apache.flink.streaming.connectors.kafka;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.testutils.OneShotLatch;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
@@ -33,6 +34,7 @@ import org.apache.flink.streaming.util.serialization.KeyedDeserializationSchema;
 import org.apache.flink.util.SerializedValue;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -46,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -84,7 +87,7 @@ public class FlinkKafkaConsumerBaseMigrationTest {
 				Assert.fail("This should never be called");
 				return null;
 			}
-		}).when(fetcher).restoreOffsets(anyMapOf(KafkaTopicPartition.class, Long.class));
+		}).when(fetcher).restoreOffsetsAndWatermarks(anyMapOf(KafkaTopicPartition.class, Long.class));
 
 		doAnswer(new Answer<Void>() {
 			@Override
@@ -173,7 +176,7 @@ public class FlinkKafkaConsumerBaseMigrationTest {
 				Assert.fail("This should never be called");
 				return null;
 			}
-		}).when(fetcher).restoreOffsets(anyMapOf(KafkaTopicPartition.class, Long.class));
+		}).when(fetcher).restoreOffsetsAndWatermarks(anyMapOf(KafkaTopicPartition.class, Long.class));
 
 		doAnswer(new Answer<Void>() {
 			@Override
@@ -273,7 +276,7 @@ public class FlinkKafkaConsumerBaseMigrationTest {
 				assertEquals(state1, map);
 				return null;
 			}
-		}).when(fetcher).restoreOffsets(anyMapOf(KafkaTopicPartition.class, Long.class));
+		}).when(fetcher).restoreOffsetsAndWatermarks(anyMapOf(KafkaTopicPartition.class, Long.class));
 
 
 		final List<KafkaTopicPartition> partitions = new ArrayList<>();
