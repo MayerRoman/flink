@@ -58,10 +58,10 @@ import java.io.ObjectInputStream;
 /**
  * This class is the executable entry point for the YARN Application Master that
  * executes a single Flink job and then shuts the YARN application down.
- * 
+ *
  * <p>The lifetime of the YARN application bound to that of the Flink job. Other
  * YARN Application Master implementations are for example the YARN session.
- * 
+ *
  * It starts actor system and the actors for {@link org.apache.flink.runtime.jobmaster.JobManagerRunner}
  * and {@link org.apache.flink.yarn.YarnResourceManager}.
  *
@@ -135,7 +135,7 @@ public class YarnFlinkApplicationMasterRunner extends AbstractYarnFlinkApplicati
 			synchronized (lock) {
 				LOG.info("Starting High Availability Services");
 				haServices = HighAvailabilityServicesUtils.createAvailableOrEmbeddedServices(config);
-				
+
 				metricRegistry = new MetricRegistry(MetricRegistryConfiguration.fromConfiguration(config));
 				commonRpcService = createRpcService(config, appMasterHostname, amPortRange);
 
@@ -271,10 +271,10 @@ public class YarnFlinkApplicationMasterRunner extends AbstractYarnFlinkApplicati
 		if (jobGraphFile != null) {
 			File fp = new File(jobGraphFile);
 			if (fp.isFile()) {
-				FileInputStream input = new FileInputStream(fp);
-				ObjectInputStream obInput = new ObjectInputStream(input);
-				jg = (JobGraph) obInput.readObject();
-				input.close();
+				try (FileInputStream input = new FileInputStream(fp);
+					 ObjectInputStream obInput = new ObjectInputStream(input);) {
+					jg = (JobGraph) obInput.readObject();
+				}
 			}
 		}
 		if (jg == null) {
