@@ -82,9 +82,10 @@ public class YarnClusterClient extends ClusterClient {
 	private final AbstractYarnClusterDescriptor clusterDescriptor;
 	private final LazApplicationClientLoader applicationClient;
 	private final FiniteDuration akkaDuration;
-	private final ApplicationReport appReport;
 	private final ApplicationId appId;
 	private final String trackingURL;
+
+	private ApplicationReport appReport;
 
 	private boolean isConnected = true;
 
@@ -203,6 +204,7 @@ public class YarnClusterClient extends ClusterClient {
 	protected JobSubmissionResult submitJob(JobGraph jobGraph, ClassLoader classLoader) throws ProgramInvocationException {
 		if (isDetached()) {
 			if (newlyCreatedCluster) {
+				appReport = clusterDescriptor.finalizeDeploy(yarnClient);
 				stopAfterJob(jobGraph.getJobID());
 			}
 			return super.runDetached(jobGraph, classLoader);

@@ -541,7 +541,11 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		yarnClusterDescriptor.setProvidedUserJarFiles(userJarFiles);
 
 		try {
-			return yarnClusterDescriptor.deploy();
+			if (detachedMode) {
+				return yarnClusterDescriptor.prepareToDeploy();
+			}else {
+				return yarnClusterDescriptor.deploy();
+			}
 		} catch (Exception e) {
 			throw new RuntimeException("Error deploying the YARN cluster", e);
 		}
