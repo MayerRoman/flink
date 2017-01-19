@@ -82,10 +82,10 @@ public class YarnClusterClient extends ClusterClient {
 	private final AbstractYarnClusterDescriptor clusterDescriptor;
 	private final LazApplicationClientLoader applicationClient;
 	private final FiniteDuration akkaDuration;
-	private final ApplicationId appId;
-	private final String trackingURL;
 
 	private ApplicationReport appReport;
+	private ApplicationId appId;
+	private String trackingURL;
 
 	private boolean isConnected = true;
 
@@ -110,7 +110,8 @@ public class YarnClusterClient extends ClusterClient {
 		final ApplicationReport appReport,
 		org.apache.flink.configuration.Configuration flinkConfig,
 		Path sessionFilesDir,
-		boolean newlyCreatedCluster) throws IOException, YarnException {
+		boolean newlyCreatedCluster,
+		boolean startPollingRunner) throws IOException, YarnException {
 
 		super(flinkConfig);
 
@@ -119,18 +120,34 @@ public class YarnClusterClient extends ClusterClient {
 		this.yarnClient = yarnClient;
 		this.hadoopConfig = yarnClient.getConfig();
 		this.sessionFilesDir = sessionFilesDir;
-		this.appReport = appReport;
-		this.appId = appReport.getApplicationId();
-		this.trackingURL = appReport.getTrackingUrl();
+
+		if (appReport != null) {
+			this.appReport = appReport;
+			this.appId = appReport.getApplicationId();
+			this.trackingURL = appReport.getTrackingUrl();
+		}
+
 		this.newlyCreatedCluster = newlyCreatedCluster;
 
 		this.applicationClient = new LazApplicationClientLoader(flinkConfig, actorSystemLoader);
 
+		if(startPollingRunner) {
+			createAndStartPollingRunner();
+		}
+
+		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
+	}
+
+	public void setAppReport(ApplicationReport appReport) {
+		this.appReport = appReport;
+		this.appId = appReport.getApplicationId();
+		this.trackingURL = appReport.getTrackingUrl();
+	}
+
+	public void createAndStartPollingRunner() {
 		this.pollingRunner = new PollingThread(yarnClient, appId);
 		this.pollingRunner.setDaemon(true);
 		this.pollingRunner.start();
-
-		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
 	}
 
 	/**
@@ -204,7 +221,7 @@ public class YarnClusterClient extends ClusterClient {
 	protected JobSubmissionResult submitJob(JobGraph jobGraph, ClassLoader classLoader) throws ProgramInvocationException {
 		if (isDetached()) {
 			if (newlyCreatedCluster) {
-				appReport = clusterDescriptor.finalizeDeploy(yarnClient);
+				clusterDescriptor.finalizeDeploy(yarnClient, this);
 				stopAfterJob(jobGraph.getJobID());
 			}
 			return super.runDetached(jobGraph, classLoader);
