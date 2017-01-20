@@ -242,7 +242,12 @@ public class YarnClusterClient extends ClusterClient {
 
 	@Override
 	public String getClusterIdentifier() {
-		return "Yarn cluster with application id " + appReport.getApplicationId();
+		//TODO доработать
+		if (appReport != null) {
+			return "Yarn cluster with application id " + appReport.getApplicationId();
+		} else {
+			return null;
+		}
 	}
 
 	/**
