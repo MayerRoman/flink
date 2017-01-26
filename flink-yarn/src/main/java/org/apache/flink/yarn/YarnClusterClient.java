@@ -92,6 +92,8 @@ public class YarnClusterClient extends ClusterClient {
 	/** Indicator whether this cluster has just been created */
 	private final boolean newlyCreatedCluster;
 
+	private boolean startPollingRunner;
+
 	/**
 	 * Create a new Flink on YARN cluster.
 	 *
@@ -131,6 +133,8 @@ public class YarnClusterClient extends ClusterClient {
 
 		this.applicationClient = new LazApplicationClientLoader(flinkConfig, actorSystemLoader);
 
+		this.startPollingRunner = startPollingRunner;
+
 		if(startPollingRunner) {
 			createAndStartPollingRunner();
 		}
@@ -148,6 +152,7 @@ public class YarnClusterClient extends ClusterClient {
 		this.pollingRunner = new PollingThread(yarnClient, appId);
 		this.pollingRunner.setDaemon(true);
 		this.pollingRunner.start();
+		this.startPollingRunner = true;
 	}
 
 	/**
@@ -171,15 +176,21 @@ public class YarnClusterClient extends ClusterClient {
 			// we are already in the shutdown hook
 		}
 
-		try {
-			pollingRunner.stopRunner();
-			pollingRunner.join(1000);
-		} catch(InterruptedException e) {
-			LOG.warn("Shutdown of the polling runner was interrupted", e);
-			Thread.currentThread().interrupt();
+		if (startPollingRunner) {
+			try {
+                pollingRunner.stopRunner();
+                pollingRunner.join(1000);
+            } catch(InterruptedException e) {
+                LOG.warn("Shutdown of the polling runner was interrupted", e);
+                Thread.currentThread().interrupt();
+            }
 		}
 
 		isConnected = false;
+
+		LOG.info("YARN Client is shutting down");
+		yarnClient.stop(); // actorRunner is using the yarnClient.
+		yarnClient = null; // set null to clearly see if somebody wants to access it afterwards.
 	}
 
 
