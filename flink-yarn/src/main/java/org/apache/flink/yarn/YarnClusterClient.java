@@ -187,12 +187,12 @@ public class YarnClusterClient extends ClusterClient {
 
 		if (startPollingRunner) {
 			try {
-   				pollingRunner.stopRunner();
-   				pollingRunner.join(1000);
-   			} catch(InterruptedException e) {
-   				LOG.warn("Shutdown of the polling runner was interrupted", e);
-   				Thread.currentThread().interrupt();
-   			}
+				pollingRunner.stopRunner();
+				pollingRunner.join(1000);
+			} catch(InterruptedException e) {
+				LOG.warn("Shutdown of the polling runner was interrupted", e);
+				Thread.currentThread().interrupt();
+			}
 		}
 
 		isConnected = false;
