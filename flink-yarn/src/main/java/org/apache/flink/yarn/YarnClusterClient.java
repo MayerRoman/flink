@@ -92,6 +92,10 @@ public class YarnClusterClient extends ClusterClient {
 	/** Indicator whether this cluster has just been created */
 	private final boolean newlyCreatedCluster;
 
+	/**
+	 * Determines whether PollingRunner created and launched in the constructor.
+	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
+	 */
 	private boolean startPollingRunner;
 
 	/**
@@ -103,6 +107,7 @@ public class YarnClusterClient extends ClusterClient {
 	 * @param flinkConfig Flink configuration
 	 * @param sessionFilesDir Location of files required for YARN session
 	 * @param newlyCreatedCluster Indicator whether this cluster has just been created
+	 * @param startPollingRunner Determines whether PollingRunner created and launched in the constructor
 	 * @throws IOException
 	 * @throws YarnException
 	 */
@@ -142,13 +147,17 @@ public class YarnClusterClient extends ClusterClient {
 		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
 	}
 
-	public void setAppReport(ApplicationReport appReport) {
+
+	void setAppReport(ApplicationReport appReport) {
 		this.appReport = appReport;
 		this.appId = appReport.getApplicationId();
 		this.trackingURL = appReport.getTrackingUrl();
 	}
 
-	public void createAndStartPollingRunner() {
+	/**
+	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
+	 */
+	void createAndStartPollingRunner() {
 		this.pollingRunner = new PollingThread(yarnClient, appId);
 		this.pollingRunner.setDaemon(true);
 		this.pollingRunner.start();
@@ -232,7 +241,7 @@ public class YarnClusterClient extends ClusterClient {
 	protected JobSubmissionResult submitJob(JobGraph jobGraph, ClassLoader classLoader) throws ProgramInvocationException {
 		if (isDetached()) {
 			if (newlyCreatedCluster) {
-				clusterDescriptor.finalizeDeploy(yarnClient, this);
+				clusterDescriptor.commitDeploy(yarnClient, this);
 				stopAfterJob(jobGraph.getJobID());
 			}
 			return super.runDetached(jobGraph, classLoader);
