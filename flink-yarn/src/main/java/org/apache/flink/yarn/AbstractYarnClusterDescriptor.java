@@ -422,7 +422,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		}
 	}
 
-	protected YarnClusterClient prepareToDeploy() {
+	public YarnClusterClient prepareToDeploy() {
 		try {
 			checkKerberosCredentials();
 			YarnClient yarnClient = prepareToDeployInternal();
@@ -564,7 +564,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	 * This method will block until the ApplicationMaster/JobManager have been
 	 * deployed on YARN.
 	 */
-	protected void commitDeploy(YarnClient yarnClient, YarnClusterClient yarnClusterClient) throws ProgramInvocationException {
+	public void commitDeploy(YarnClient yarnClient, YarnClusterClient yarnClusterClient) throws ProgramInvocationException {
 		try {
 			ApplicationReport report = commitDeployInternal(yarnClient);
 
