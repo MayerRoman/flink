@@ -575,8 +575,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			yarnClusterClient.createAndStartPollingRunner();
 
 		} catch (Exception e) {
-			//TODO: придумать сообщение
-			throw new ProgramInvocationException("Exception in commitDeploy");
+			throw new ProgramInvocationException("Couldn't deploy Yarn cluster", e);
 		}
 	}
 
