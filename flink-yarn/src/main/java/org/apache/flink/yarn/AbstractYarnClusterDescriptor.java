@@ -410,26 +410,19 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	public YarnClusterClient deploy() {
 		try {
 			checkKerberosCredentials();
-			return deployInternal();
+
+			YarnClient yarnClient = prepareToDeployInternal();
+
+			ApplicationReport report = commitDeployInternal(yarnClient);
+
+			// the Flink cluster is deployed in YARN. Represent cluster
+			return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true, true);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't deploy Yarn cluster", e);
 		}
 	}
 
-	/**
-	 * This method will block until the ApplicationMaster/JobManager have been
-	 * deployed on YARN.
-	 */
-	protected YarnClusterClient deployInternal() throws Exception {
-		YarnClient yarnClient = prepareToDeployInternal();
-
-		ApplicationReport report = commitDeployInternal(yarnClient);
-
-		// the Flink cluster is deployed in YARN. Represent cluster
-		return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true, true);
-	}
-
-	public YarnClusterClient prepareToDeploy() {
+	protected YarnClusterClient prepareToDeploy() {
 		try {
 			checkKerberosCredentials();
 			YarnClient yarnClient = prepareToDeployInternal();
@@ -567,6 +560,10 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		return yarnClient;
 	}
 
+	/**
+	 * This method will block until the ApplicationMaster/JobManager have been
+	 * deployed on YARN.
+	 */
 	protected void commitDeploy(YarnClient yarnClient, YarnClusterClient yarnClusterClient) throws ProgramInvocationException {
 		try {
 			ApplicationReport report = commitDeployInternal(yarnClient);
