@@ -399,7 +399,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			flinkConfiguration.setString(ConfigConstants.JOB_MANAGER_IPC_ADDRESS_KEY, appReport.getHost());
 			flinkConfiguration.setInteger(ConfigConstants.JOB_MANAGER_IPC_PORT_KEY, appReport.getRpcPort());
 
-			return createYarnClusterClient(this, yarnClient, appReport, flinkConfiguration, sessionFilesDir, false);
+			return createYarnClusterClient(this, yarnClient, appReport, flinkConfiguration, sessionFilesDir, false, true);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't retrieve Yarn cluster", e);
 		}
@@ -564,7 +564,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		flinkConfiguration.setInteger(ConfigConstants.JOB_MANAGER_IPC_PORT_KEY, port);
 
 		// the Flink cluster is deployed in YARN. Represent cluster
-		return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true);
+		return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true, true);
 	}
 
 	public ApplicationReport startAppMaster(JobGraph jobGraph, YarnClient yarnClient, YarnClientApplication yarnApplication) throws Exception {
@@ -1234,14 +1234,16 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			ApplicationReport report,
 			org.apache.flink.configuration.Configuration flinkConfiguration,
 			Path sessionFilesDir,
-			boolean perJobCluster) throws IOException, YarnException {
+			boolean perJobCluster,
+			boolean startPollingRunner) throws IOException, YarnException {
 		return new YarnClusterClient(
 			descriptor,
 			yarnClient,
 			report,
 			flinkConfiguration,
 			sessionFilesDir,
-			perJobCluster);
+			perJobCluster,
+			startPollingRunner);
 	}
 }
 

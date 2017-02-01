@@ -391,7 +391,8 @@ public class CliFrontendYarnAddressConfigurationTest {
 						ApplicationReport report,
 						Configuration flinkConfiguration,
 						Path sessionFilesDir,
-						boolean perJobCluster) throws IOException, YarnException {
+						boolean perJobCluster,
+						boolean startPollingRunner) throws IOException, YarnException {
 
 					return Mockito.mock(YarnClusterClient.class);
 				}

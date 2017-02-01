@@ -82,14 +82,21 @@ public class YarnClusterClient extends ClusterClient {
 	private final AbstractYarnClusterDescriptor clusterDescriptor;
 	private final LazApplicationClientLoader applicationClient;
 	private final FiniteDuration akkaDuration;
-	private final ApplicationReport appReport;
-	private final ApplicationId appId;
-	private final String trackingURL;
+
+	private ApplicationReport appReport;
+	private ApplicationId appId;
+	private String trackingURL;
 
 	private boolean isConnected = true;
 
 	/** Indicator whether this cluster has just been created */
 	private final boolean newlyCreatedCluster;
+
+	/**
+	 * Determines whether PollingRunner created and launched in the constructor.
+	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
+	 */
+	private boolean startPollingRunner;
 
 	/**
 	 * Create a new Flink on YARN cluster.
@@ -100,6 +107,7 @@ public class YarnClusterClient extends ClusterClient {
 	 * @param flinkConfig Flink configuration
 	 * @param sessionFilesDir Location of files required for YARN session
 	 * @param newlyCreatedCluster Indicator whether this cluster has just been created
+	 * @param startPollingRunner Determines whether PollingRunner created and launched in the constructor
 	 * @throws IOException
 	 * @throws YarnException
 	 */
@@ -109,7 +117,8 @@ public class YarnClusterClient extends ClusterClient {
 		final ApplicationReport appReport,
 		org.apache.flink.configuration.Configuration flinkConfig,
 		Path sessionFilesDir,
-		boolean newlyCreatedCluster) throws IOException, YarnException {
+		boolean newlyCreatedCluster,
+		boolean startPollingRunner) throws IOException, YarnException {
 
 		super(flinkConfig);
 
@@ -118,19 +127,36 @@ public class YarnClusterClient extends ClusterClient {
 		this.yarnClient = yarnClient;
 		this.hadoopConfig = yarnClient.getConfig();
 		this.sessionFilesDir = sessionFilesDir;
-		this.appReport = appReport;
-		this.appId = appReport.getApplicationId();
-		this.trackingURL = appReport.getTrackingUrl();
+
+		if (appReport != null) {
+			this.appReport = appReport;
+			this.appId = appReport.getApplicationId();
+			this.trackingURL = appReport.getTrackingUrl();
+		}
+
 		this.newlyCreatedCluster = newlyCreatedCluster;
 
 		this.applicationClient = new LazApplicationClientLoader(flinkConfig, actorSystemLoader);
 
-		this.pollingRunner = new PollingThread(yarnClient, appId);
-		this.pollingRunner.setDaemon(true);
-		this.pollingRunner.start();
+		this.startPollingRunner = startPollingRunner;
+
+		if (startPollingRunner) {
+			createAndStartPollingRunner();
+		}
 
 		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
 	}
+
+	/**
+	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
+	 */
+	void createAndStartPollingRunner() {
+		this.pollingRunner = new PollingThread(yarnClient, appId);
+		this.pollingRunner.setDaemon(true);
+		this.pollingRunner.start();
+		this.startPollingRunner = true;
+	}
+
 
 	/**
 	 * Disconnect from the Yarn cluster
