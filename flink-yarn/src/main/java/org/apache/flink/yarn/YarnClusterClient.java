@@ -147,6 +147,12 @@ public class YarnClusterClient extends ClusterClient {
 		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
 	}
 
+	void setAppReport(ApplicationReport appReport) {
+		this.appReport = appReport;
+		this.appId = appReport.getApplicationId();
+		this.trackingURL = appReport.getTrackingUrl();
+	}
+
 	/**
 	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
 	 */
@@ -179,15 +185,21 @@ public class YarnClusterClient extends ClusterClient {
 			// we are already in the shutdown hook
 		}
 
-		try {
-			pollingRunner.stopRunner();
-			pollingRunner.join(1000);
-		} catch(InterruptedException e) {
-			LOG.warn("Shutdown of the polling runner was interrupted", e);
-			Thread.currentThread().interrupt();
+		if (startPollingRunner) {
+			try {
+				pollingRunner.stopRunner();
+				pollingRunner.join(1000);
+			} catch(InterruptedException e) {
+				LOG.warn("Shutdown of the polling runner was interrupted", e);
+				Thread.currentThread().interrupt();
+			}
 		}
 
 		isConnected = false;
+
+		LOG.info("YARN Client is shutting down");
+		yarnClient.stop(); // actorRunner is using the yarnClient.
+		yarnClient = null; // set null to clearly see if somebody wants to access it afterwards.
 	}
 
 
@@ -240,8 +252,12 @@ public class YarnClusterClient extends ClusterClient {
 	@Override
 	public String getWebInterfaceURL() {
 		// there seems to be a difference between HD 2.2.0 and 2.6.0
-		if(!trackingURL.startsWith("http://")) {
-			return "http://" + trackingURL;
+		if (appReport != null) {
+			if(!trackingURL.startsWith("http://")) {
+                return "http://" + trackingURL;
+            } else {
+                return trackingURL;
+            }
 		} else {
 			return trackingURL;
 		}
@@ -249,7 +265,11 @@ public class YarnClusterClient extends ClusterClient {
 
 	@Override
 	public String getClusterIdentifier() {
-		return "Yarn cluster with application id " + appReport.getApplicationId();
+		if (appReport != null) {
+			return "Yarn cluster with application id " + appReport.getApplicationId();
+		} else {
+			return null;
+		}
 	}
 
 	/**
