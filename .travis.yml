@@ -14,7 +14,7 @@ language: java
 #See https://issues.apache.org/jira/browse/FLINK-1072
 matrix:
   include:
-   Always run test groups A and B together
+   # Always run test groups A and B together
     - jdk: "oraclejdk8"
       env: PROFILE="-Dhadoop.version=2.7.2 -Dscala-2.11 -Pinclude-yarn-tests,flink-fast-tests-c,include-kinesis -Dmaven.javadoc.skip=true"
     - jdk: "oraclejdk8"
