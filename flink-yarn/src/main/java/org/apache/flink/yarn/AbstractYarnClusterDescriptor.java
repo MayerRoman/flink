@@ -20,6 +20,7 @@ package org.apache.flink.yarn;
 
 import org.apache.flink.client.CliFrontend;
 import org.apache.flink.client.deployment.ClusterDescriptor;
+import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.configuration.IllegalConfigurationException;
@@ -434,6 +435,28 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		}
 	}
 
+	public YarnClusterClient prepareToDeploy() {
+		try {
+			if(UserGroupInformation.isSecurityEnabled()) {
+				// note: UGI::hasKerberosCredentials inaccurately reports false
+				// for logins based on a keytab (fixed in Hadoop 2.6.1, see HADOOP-10786),
+				// so we check only in ticket cache scenario.
+				boolean useTicketCache = flinkConfiguration.getBoolean(SecurityOptions.KERBEROS_LOGIN_USETICKETCACHE);
+				UserGroupInformation loginUser = UserGroupInformation.getCurrentUser();
+				if (useTicketCache && !loginUser.hasKerberosCredentials()) {
+					LOG.error("Hadoop security is enabled but the login user does not have Kerberos credentials");
+					throw new RuntimeException("Hadoop security is enabled but the login user " +
+						"does not have Kerberos credentials");
+				}
+			}
+			YarnClient yarnClient = prepareToDeployInternal();
+			return createYarnClusterClient(this, yarnClient, null, flinkConfiguration, sessionFilesDir, true, false);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Couldn't deploy Yarn cluster", e);
+		}
+	}
+
 	private YarnClient prepareToDeployInternal() throws Exception {
 		isReadyForDeployment();
 		LOG.info("Using values:");
@@ -559,6 +582,19 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		}
 
 		return yarnClient;
+	}
+
+
+	public void commitDeploy(YarnClient yarnClient, YarnClusterClient yarnClusterClient) throws ProgramInvocationException {
+		try {
+			ApplicationReport report = commitDeployInternal(yarnClient);
+
+			yarnClusterClient.setAppReport(report);
+			yarnClusterClient.createAndStartPollingRunner();
+
+		} catch (Exception e) {
+			throw new ProgramInvocationException("Couldn't deploy Yarn cluster", e);
+		}
 	}
 
 	/**
