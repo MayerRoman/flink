@@ -16,7 +16,7 @@ matrix:
   include:
   # Always run test groups A and B together
     - jdk: "oraclejdk8"
-      env: PROFILE="integration-test -Pinclude-yarn-tests -Dtest=org.apache.flink.yarn.YARNSessionCapacitySchedulerITCase -DfailIfNoTests=false -Dmaven.javadoc.skip=true"
+      env: PROFILE="-Pinclude-yarn-tests -Dtest=org.apache.flink.yarn.YARNSessionCapacitySchedulerITCase -DfailIfNoTests=false -Dmaven.javadoc.skip=true"
 
 
 git:
