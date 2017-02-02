@@ -101,6 +101,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 
 	private Configuration conf = new YarnConfiguration();
 
+	private YarnClientApplication yarnApplication;
+
 	/**
 	 * Files (usually in a distributed file system) used for the YARN session of Flink.
 	 * Contains configuration files and jar files.
@@ -420,17 +422,19 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 							"does not have Kerberos credentials");
 				}
 			}
-			return deployInternal();
+
+			YarnClient yarnClient = prepareToDeployInternal();
+
+			ApplicationReport report = commitDeployInternal(yarnClient);
+
+			// the Flink cluster is deployed in YARN. Represent cluster
+			return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true, true);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't deploy Yarn cluster", e);
 		}
 	}
 
-	/**
-	 * This method will block until the ApplicationMaster/JobManager have been
-	 * deployed on YARN.
-	 */
-	protected YarnClusterClient deployInternal() throws Exception {
+	private YarnClient prepareToDeployInternal() throws Exception {
 		isReadyForDeployment();
 		LOG.info("Using values:");
 		LOG.info("\tTaskManager count = {}", taskManagerCount);
@@ -554,6 +558,14 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			}
 		}
 
+		return yarnClient;
+	}
+
+	/**
+	 * This method will block until the ApplicationMaster/JobManager have been
+	 * deployed on YARN.
+	 */
+	private ApplicationReport commitDeployInternal(YarnClient yarnClient) throws Exception {
 		ApplicationReport report = startAppMaster(null, yarnClient, yarnApplication);
 
 		String host = report.getHost();
@@ -563,8 +575,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		flinkConfiguration.setString(ConfigConstants.JOB_MANAGER_IPC_ADDRESS_KEY, host);
 		flinkConfiguration.setInteger(ConfigConstants.JOB_MANAGER_IPC_PORT_KEY, port);
 
-		// the Flink cluster is deployed in YARN. Represent cluster
-		return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true, true);
+		return report;
 	}
 
 	public ApplicationReport startAppMaster(JobGraph jobGraph, YarnClient yarnClient, YarnClientApplication yarnApplication) throws Exception {
