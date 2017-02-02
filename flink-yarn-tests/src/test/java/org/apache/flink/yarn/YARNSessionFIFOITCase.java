@@ -92,7 +92,7 @@ public class YARNSessionFIFOITCase extends YarnTestBase {
 						"-tm", "1024",
 						"--name", "MyCustomName", // test setting a custom name
 						"--detached"},
-				"Flink JobManager is now running on", RunTypes.YARN_SESSION);
+				         "Flink JobManager is now running on", RunTypes.YARN_SESSION);
 
 		// before checking any strings outputted by the CLI, first give it time to return
 		runner.join();

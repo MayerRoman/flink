@@ -501,7 +501,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		}
 
 		// Create application via yarnClient
-		final YarnClientApplication yarnApplication = yarnClient.createApplication();
+		yarnApplication = yarnClient.createApplication();
 		GetNewApplicationResponse appResponse = yarnApplication.getNewApplicationResponse();
 
 		Resource maxRes = appResponse.getMaximumResourceCapability();
