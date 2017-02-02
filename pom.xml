@@ -776,6 +776,12 @@ under the License.
 				<flink-fast-tests-pattern>%regex[.*/[N-Z].*]</flink-fast-tests-pattern>
 			</properties>
 		</profile>
+		<profile>
+			<id>flink-fast-tests-c</id>
+			<properties>
+				<flink-fast-tests-pattern>%regex[.*/YARNSessionCapacitySchedulerITCase.*]</flink-fast-tests-pattern>
+			</properties>
+		</profile>
 	</profiles>
 
 	<build>
