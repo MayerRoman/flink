@@ -542,8 +542,10 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 
 		try {
 			if (detachedMode) {
+				LOG.warn(">>>>>>>>>>>>starting yarnClusterDescriptor.prepareToDeployFrom FlinkYarnSessionCli");
 				return yarnClusterDescriptor.prepareToDeploy();
 			}else {
+				LOG.warn(">>>>>>>>>>>>starting yarnClusterDescriptor.deploy from FlinkYarnSessionCli");
 				return yarnClusterDescriptor.deploy();
 			}
 		} catch (Exception e) {

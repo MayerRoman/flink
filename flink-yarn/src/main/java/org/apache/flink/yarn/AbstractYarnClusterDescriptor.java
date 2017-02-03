@@ -411,7 +411,12 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		try {
 			checkKerberosCredentials();
 
+			LOG.warn(">>>>>>>>>start prepareToDeployInternal from deploy");
+
 			YarnClient yarnClient = prepareToDeployInternal();
+
+			LOG.warn(">>>>>>>>>start commitDeployInternal from deploy");
+
 
 			ApplicationReport report = commitDeployInternal(yarnClient);
 
@@ -425,6 +430,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	public YarnClusterClient prepareToDeploy() {
 		try {
 			checkKerberosCredentials();
+			LOG.warn(">>>>>>>>>start prepareToDeployInternal from prepareToDeploy");
+
 			YarnClient yarnClient = prepareToDeployInternal();
 			return createYarnClusterClient(this, yarnClient, null, flinkConfiguration, sessionFilesDir, true, false);
 		} catch (Exception e) {
@@ -566,6 +573,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	 */
 	public void commitDeploy(YarnClient yarnClient, YarnClusterClient yarnClusterClient) throws ProgramInvocationException {
 		try {
+			LOG.warn(">>>>>>>>>start commitDeployInternal from commitDeploy");
+
 			ApplicationReport report = commitDeployInternal(yarnClient);
 
 			yarnClusterClient.setAppReport(report);
@@ -590,6 +599,9 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	}
 
 	public ApplicationReport startAppMaster(JobGraph jobGraph, YarnClient yarnClient) throws Exception {
+
+		LOG.warn(">>>>>>>>>>detached: " + detached);
+
 
 		// ------------------ Set default file system scheme -------------------------
 

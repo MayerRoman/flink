@@ -952,6 +952,7 @@ public class CliFrontend {
 					options.getCommandLine(),
 					config,
 					program.getAllLibraries());
+				LOG.warn(">>>>>>>>>>>>creationg Cluster from CliFrontEnd");
 				logAndSysout("Cluster started: " + client.getClusterIdentifier());
 			} catch (UnsupportedOperationException e2) {
 				throw new IllegalConfigurationException(
