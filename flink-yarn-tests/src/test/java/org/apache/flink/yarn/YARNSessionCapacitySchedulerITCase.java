@@ -313,19 +313,19 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 	 * for the user. (Users had unexpected behavior of Flink on YARN because they mistyped the
 	 * target queue. With an error message, we can help users identifying the issue)
 	 */
-//	@Test
-//	public void testNonexistingQueueWARNmessage() {
-//		LOG.info("Starting testNonexistingQueueWARNmessage()");
-//		addTestAppender(YarnClusterDescriptor.class, Level.WARN);
-//		runWithArgs(new String[]{"-j", flinkUberjar.getAbsolutePath(),
-//				"-t", flinkLibFolder.getAbsolutePath(),
-//				"-n", "1",
-//				"-jm", "768",
-//				"-tm", "1024",
-//				"-qu", "doesntExist"}, "to unknown queue: doesntExist", null, RunTypes.YARN_SESSION, 1);
-//		checkForLogString("The specified queue 'doesntExist' does not exist. Available queues");
-//		LOG.info("Finished testNonexistingQueueWARNmessage()");
-//	}
+	@Test
+	public void testNonexistingQueueWARNmessage() {
+		LOG.info("Starting testNonexistingQueueWARNmessage()");
+		addTestAppender(YarnClusterDescriptor.class, Level.WARN);
+		runWithArgs(new String[]{"-j", flinkUberjar.getAbsolutePath(),
+				"-t", flinkLibFolder.getAbsolutePath(),
+				"-n", "1",
+				"-jm", "768",
+				"-tm", "1024",
+				"-qu", "doesntExist"}, "to unknown queue: doesntExist", null, RunTypes.YARN_SESSION, 1);
+		checkForLogString("The specified queue 'doesntExist' does not exist. Available queues");
+		LOG.info("Finished testNonexistingQueueWARNmessage()");
+	}
 
 	/**
 	 * Test per-job yarn cluster with the parallelism set at the CliFrontend instead of the YARN client.
