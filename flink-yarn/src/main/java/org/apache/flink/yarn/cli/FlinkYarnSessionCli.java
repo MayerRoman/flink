@@ -541,6 +541,7 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		yarnClusterDescriptor.setProvidedUserJarFiles(userJarFiles);
 
 		try {
+			LOG.warn(">>>>>>>>>>>>detached: " + detachedMode);
 			if (detachedMode) {
 				LOG.warn(">>>>>>>>>>>>starting yarnClusterDescriptor.prepareToDeployFrom FlinkYarnSessionCli");
 				return yarnClusterDescriptor.prepareToDeploy();
