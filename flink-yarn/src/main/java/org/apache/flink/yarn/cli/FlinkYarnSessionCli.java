@@ -623,6 +623,8 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 			}
 
 			try {
+				LOG.debug(">>>>>>>>>>>deploying from FlinkYarnSessionCli#run()");
+				LOG.debug(">>>>>>>>>>>detached: " + detachedMode);
 				yarnCluster = yarnDescriptor.deploy();
 			} catch (Exception e) {
 				System.err.println("Error while deploying YARN cluster: "+e.getMessage());
@@ -664,6 +666,7 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 						"Please also note that the temporary files of the YARN session in {} will not be removed.",
 						yarnDescriptor.getSessionFilesDir());
 				yarnCluster.waitForClusterToBeReady();
+				LOG.debug(">>>>>>>>>>>disconnecting from FlinkYarnSessionCli#run()");
 				yarnCluster.disconnect();
 			} else {
 				runInteractiveCli(yarnCluster, acceptInteractiveInput);
