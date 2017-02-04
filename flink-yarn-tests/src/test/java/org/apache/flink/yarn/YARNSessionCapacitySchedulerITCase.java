@@ -357,37 +357,37 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 	/**
 	 * Test a fire-and-forget job submission to a YARN cluster.
 	 */
-	@Test(timeout=60000)
-	public void testDetachedPerJobYarnCluster() {
-		LOG.info("Starting testDetachedPerJobYarnCluster()");
-
-		File exampleJarLocation = YarnTestBase.findFile(
-			".." + File.separator + "flink-examples" + File.separator + "flink-examples-batch",
-			new ContainsName(new String[] {"-WordCount.jar"}));
-
-		Assert.assertNotNull("Could not find batch wordcount jar", exampleJarLocation);
-
-		testDetachedPerJobYarnClusterInternal(exampleJarLocation.getAbsolutePath());
-
-		LOG.info("Finished testDetachedPerJobYarnCluster()");
-	}
+//	@Test(timeout=60000)
+//	public void testDetachedPerJobYarnCluster() {
+//		LOG.info("Starting testDetachedPerJobYarnCluster()");
+//
+//		File exampleJarLocation = YarnTestBase.findFile(
+//			".." + File.separator + "flink-examples" + File.separator + "flink-examples-batch",
+//			new ContainsName(new String[] {"-WordCount.jar"}));
+//
+//		Assert.assertNotNull("Could not find batch wordcount jar", exampleJarLocation);
+//
+//		testDetachedPerJobYarnClusterInternal(exampleJarLocation.getAbsolutePath());
+//
+//		LOG.info("Finished testDetachedPerJobYarnCluster()");
+//	}
 
 	/**
 	 * Test a fire-and-forget job submission to a YARN cluster.
 	 */
-//	@Test(timeout=60000)
-//	public void testDetachedPerJobYarnClusterWithStreamingJob() {
-//		LOG.info("Starting testDetachedPerJobYarnClusterWithStreamingJob()");
-//
-//		File exampleJarLocation = YarnTestBase.findFile(
-//			".." + File.separator + "flink-examples" + File.separator + "flink-examples-streaming",
-//			new ContainsName(new String[] {"-WordCount.jar"}));
-//		Assert.assertNotNull("Could not find streaming wordcount jar", exampleJarLocation);
-//
-//		testDetachedPerJobYarnClusterInternal(exampleJarLocation.getAbsolutePath());
-//
-//		LOG.info("Finished testDetachedPerJobYarnClusterWithStreamingJob()");
-//	}
+	@Test(timeout=60000)
+	public void testDetachedPerJobYarnClusterWithStreamingJob() {
+		LOG.info("Starting testDetachedPerJobYarnClusterWithStreamingJob()");
+
+		File exampleJarLocation = YarnTestBase.findFile(
+			".." + File.separator + "flink-examples" + File.separator + "flink-examples-streaming",
+			new ContainsName(new String[] {"-WordCount.jar"}));
+		Assert.assertNotNull("Could not find streaming wordcount jar", exampleJarLocation);
+
+		testDetachedPerJobYarnClusterInternal(exampleJarLocation.getAbsolutePath());
+
+		LOG.info("Finished testDetachedPerJobYarnClusterWithStreamingJob()");
+	}
 
 	private void testDetachedPerJobYarnClusterInternal(String job) {
 		YarnClient yc = YarnClient.createYarnClient();
