@@ -557,6 +557,8 @@ public class YarnClusterClient extends ClusterClient {
 
 	@Override
 	public boolean isDetached() {
+		LOG.debug(">>>>>>>>super.isDetached(): " + super.isDetached());
+		LOG.debug(">>>>>>>>clusterDescriptor.isDetachedMode(): " + clusterDescriptor.isDetachedMode());
 		return super.isDetached() || clusterDescriptor.isDetachedMode();
 	}
 

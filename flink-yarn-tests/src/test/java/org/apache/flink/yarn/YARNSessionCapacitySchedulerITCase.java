@@ -106,25 +106,6 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 	 * We also test if the requested parallelism of 2 is passed through.
 	 * The parallelism is requested at the YARN client (-ys).
 	 */
-	@Test
-	public void perJobYarnCluster() {
-		LOG.info("Starting perJobYarnCluster()");
-		addTestAppender(JobClient.class, Level.INFO);
-		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"} , "streaming")); // exclude streaming wordcount here.
-		Assert.assertNotNull("Could not find wordcount jar", exampleJarLocation);
-		runWithArgs(new String[]{"run", "-m", "yarn-cluster",
-				"-yj", flinkUberjar.getAbsolutePath(), "-yt", flinkLibFolder.getAbsolutePath(),
-				"-yn", "1",
-				"-ys", "2", //test that the job is executed with a DOP of 2
-				"-yjm", "768",
-				"-ytm", "1024", exampleJarLocation.getAbsolutePath()},
-				/* test succeeded after this string */
-			"Job execution complete",
-			/* prohibited strings: (we want to see "DataSink (...) (2/2) switched to FINISHED") */
-			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
-			RunTypes.CLI_FRONTEND, 0, true);
-		LOG.info("Finished perJobYarnCluster()");
-	}
 
 
 	/**
@@ -313,19 +294,19 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 	 * for the user. (Users had unexpected behavior of Flink on YARN because they mistyped the
 	 * target queue. With an error message, we can help users identifying the issue)
 	 */
-	@Test
-	public void testNonexistingQueueWARNmessage() {
-		LOG.info("Starting testNonexistingQueueWARNmessage()");
-		addTestAppender(YarnClusterDescriptor.class, Level.WARN);
-		runWithArgs(new String[]{"-j", flinkUberjar.getAbsolutePath(),
-				"-t", flinkLibFolder.getAbsolutePath(),
-				"-n", "1",
-				"-jm", "768",
-				"-tm", "1024",
-				"-qu", "doesntExist"}, "to unknown queue: doesntExist", null, RunTypes.YARN_SESSION, 1);
-		checkForLogString("The specified queue 'doesntExist' does not exist. Available queues");
-		LOG.info("Finished testNonexistingQueueWARNmessage()");
-	}
+//	@Test
+//	public void testNonexistingQueueWARNmessage() {
+//		LOG.info("Starting testNonexistingQueueWARNmessage()");
+//		addTestAppender(YarnClusterDescriptor.class, Level.WARN);
+//		runWithArgs(new String[]{"-j", flinkUberjar.getAbsolutePath(),
+//				"-t", flinkLibFolder.getAbsolutePath(),
+//				"-n", "1",
+//				"-jm", "768",
+//				"-tm", "1024",
+//				"-qu", "doesntExist"}, "to unknown queue: doesntExist", null, RunTypes.YARN_SESSION, 1);
+//		checkForLogString("The specified queue 'doesntExist' does not exist. Available queues");
+//		LOG.info("Finished testNonexistingQueueWARNmessage()");
+//	}
 
 	/**
 	 * Test per-job yarn cluster with the parallelism set at the CliFrontend instead of the YARN client.
@@ -388,6 +369,27 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 
 		LOG.info("Finished testDetachedPerJobYarnClusterWithStreamingJob()");
 	}
+
+	@Test
+	public void perJobYarnCluster() {
+		LOG.info("Starting perJobYarnCluster()");
+		addTestAppender(JobClient.class, Level.INFO);
+		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"} , "streaming")); // exclude streaming wordcount here.
+		Assert.assertNotNull("Could not find wordcount jar", exampleJarLocation);
+		runWithArgs(new String[]{"run", "-m", "yarn-cluster",
+				"-yj", flinkUberjar.getAbsolutePath(), "-yt", flinkLibFolder.getAbsolutePath(),
+				"-yn", "1",
+				"-ys", "2", //test that the job is executed with a DOP of 2
+				"-yjm", "768",
+				"-ytm", "1024", exampleJarLocation.getAbsolutePath()},
+				/* test succeeded after this string */
+			"Job execution complete",
+			/* prohibited strings: (we want to see "DataSink (...) (2/2) switched to FINISHED") */
+			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
+			RunTypes.CLI_FRONTEND, 0, true);
+		LOG.info("Finished perJobYarnCluster()");
+	}
+
 
 	private void testDetachedPerJobYarnClusterInternal(String job) {
 		YarnClient yc = YarnClient.createYarnClient();
