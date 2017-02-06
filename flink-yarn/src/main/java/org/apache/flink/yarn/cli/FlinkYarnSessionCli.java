@@ -252,6 +252,8 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 
 	public AbstractYarnClusterDescriptor createDescriptor(String defaultApplicationName, CommandLine cmd) {
 
+		LOG.warn(">>>>>> in createDescriptor");
+
 		AbstractYarnClusterDescriptor yarnClusterDescriptor = getClusterDescriptor();
 
 		if (!cmd.hasOption(CONTAINER.getOpt())) { // number of containers is required option!
@@ -330,7 +332,6 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 
 		yarnClusterDescriptor.setDynamicPropertiesEncoded(dynamicPropertiesEncoded);
 
-		LOG.warn(">>>>>in createDescriptor");
 		LOG.warn(">>>>>cmd.hasOption(DETACHED.getOpt()): " + cmd.hasOption(DETACHED.getOpt()));
 		LOG.warn(">>>>>cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt()): " + cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt()));
 

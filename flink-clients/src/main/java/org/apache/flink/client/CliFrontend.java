@@ -132,6 +132,7 @@ public class CliFrontend {
 		//	to prefix all options with y/yarn.
 		//	Tips: DefaultCLI must be added at last, because getActiveCustomCommandLine(..) will get the
 		//	      active CustomCommandLine in order and DefaultCLI isActive always return true.
+		LOG.warn(">>>>>>in static block");
 		loadCustomCommandLine("org.apache.flink.yarn.cli.FlinkYarnSessionCli", "y", "yarn");
 		loadCustomCommandLine("org.apache.flink.yarn.cli.FlinkYarnCLI", "y", "yarn");
 		customCommandLine.add(new DefaultCLI());
@@ -245,6 +246,7 @@ public class CliFrontend {
 
 			client = createClient(options, program);
 			client.setPrintStatusDuringExecution(options.getStdoutLogging());
+			LOG.warn(">>>>> options.getDetachedMode(): " + options.getDetachedMode());
 			client.setDetached(options.getDetachedMode());
 			LOG.debug("Client slots is set to {}", client.getMaxSlots());
 
@@ -944,8 +946,10 @@ public class CliFrontend {
 		LOG.warn(">>>>>> in crateClient");
 
 		// Get the custom command-line (e.g. Standalone/Yarn/Mesos)
+
 		CustomCommandLine<?> activeCommandLine = getActiveCustomCommandLine(options.getCommandLine());
 
+		LOG.warn("activeCommandLine: " + activeCommandLine);
 		ClusterClient client;
 		try {
 			client = activeCommandLine.retrieveCluster(options.getCommandLine(), config);
