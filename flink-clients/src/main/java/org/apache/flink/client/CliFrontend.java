@@ -155,6 +155,7 @@ public class CliFrontend {
 
 	public CliFrontend(String configDir) throws Exception {
 
+		LOG.warn(">>>>>> in constructor");
 		// configure the config directory
 		File configDirectory = new File(configDir);
 		LOG.info("Using configuration directory " + configDirectory.getAbsolutePath());
@@ -203,6 +204,8 @@ public class CliFrontend {
 	 */
 	protected int run(String[] args) {
 		LOG.info("Running 'run' command.");
+
+		LOG.warn(">>>>>> in run");
 
 		RunOptions options;
 		try {
@@ -938,6 +941,7 @@ public class CliFrontend {
 	protected ClusterClient createClient(
 			CommandLineOptions options,
 			PackagedProgram program) throws Exception {
+		LOG.warn(">>>>>> in crateClient");
 
 		// Get the custom command-line (e.g. Standalone/Yarn/Mesos)
 		CustomCommandLine<?> activeCommandLine = getActiveCustomCommandLine(options.getCommandLine());
@@ -949,6 +953,7 @@ public class CliFrontend {
 		} catch (UnsupportedOperationException e) {
 			try {
 				String applicationName = "Flink Application: " + program.getMainClassName();
+				LOG.warn(">>>>>> colling createCluster");
 				client = activeCommandLine.createCluster(
 					applicationName,
 					options.getCommandLine(),
@@ -1114,6 +1119,7 @@ public class CliFrontend {
 		EnvironmentInformation.logEnvironmentInfo(LOG, "Command Line Client", args);
 
 		try {
+			LOG.warn(">>>>>>in main");
 			final CliFrontend cli = new CliFrontend();
 			SecurityUtils.install(new SecurityUtils.SecurityConfiguration(cli.config));
 			int retCode = SecurityUtils.getInstalledContext()
@@ -1184,6 +1190,7 @@ public class CliFrontend {
 	 * @return custom command-line which is active (may only be one at a time)
 	 */
 	public CustomCommandLine getActiveCustomCommandLine(CommandLine commandLine) {
+		LOG.warn(">>>>>> in getActiveCustomCommandLine");
 		for (CustomCommandLine cli : customCommandLine) {
 			if (cli.isActive(commandLine, config)) {
 				return cli;

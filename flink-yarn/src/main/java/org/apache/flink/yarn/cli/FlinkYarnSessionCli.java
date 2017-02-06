@@ -548,7 +548,7 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 			CommandLine cmdLine,
 			Configuration config,
 			List<URL> userJarFiles) {
-		LOG.warn(">>>>>in createCluster");
+		LOG.warn(">>>>>>in createCluster");
 		LOG.warn(">>>>>detachedMode: " + detachedMode);
 		Preconditions.checkNotNull(userJarFiles, "User jar files should not be null.");
 
@@ -556,10 +556,11 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		yarnClusterDescriptor.setFlinkConfiguration(config);
 		yarnClusterDescriptor.setProvidedUserJarFiles(userJarFiles);
 
-		LOG.warn(">>>>>in createCluster");
+		LOG.warn(">>>>>>in createCluster after createDescriptor");
 		LOG.warn(">>>>>detachedMode: " + detachedMode);
 
 		try {
+			LOG.warn(">>>>>> calling yarnClusterDescriptor.deploy");
 			return yarnClusterDescriptor.deploy();
 		} catch (Exception e) {
 			throw new RuntimeException("Error deploying the YARN cluster", e);
@@ -568,6 +569,7 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 	}
 
 	public int run(String[] args) {
+		LOG.warn(">>>>>> in run (unusual way)");
 		//
 		//	Command Line Options
 		//

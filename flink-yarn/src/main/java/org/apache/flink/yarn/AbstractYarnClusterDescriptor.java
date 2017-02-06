@@ -408,6 +408,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 
 	@Override
 	public YarnClusterClient deploy() {
+		LOG.warn(">>>>>> in deploy");
 		try {
 			if(UserGroupInformation.isSecurityEnabled()) {
 				// note: UGI::hasKerberosCredentials inaccurately reports false
@@ -432,6 +433,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	 * deployed on YARN.
 	 */
 	protected YarnClusterClient deployInternal() throws Exception {
+		LOG.warn(">>>>>> in deployInternal");
 		isReadyForDeployment();
 		LOG.info("Using values:");
 		LOG.info("\tTaskManager count = {}", taskManagerCount);
@@ -569,6 +571,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	}
 
 	public ApplicationReport startAppMaster(JobGraph jobGraph, YarnClient yarnClient, YarnClientApplication yarnApplication) throws Exception {
+		LOG.warn(">>>>>> in startAppMaster");
 
 		// ------------------ Set default file system scheme -------------------------
 
