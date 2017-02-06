@@ -141,7 +141,7 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		SLOTS = new Option(shortPrefix + "s", longPrefix + "slots", true, "Number of slots per TaskManager");
 		DYNAMIC_PROPERTIES = new Option(shortPrefix + "D", true, "Dynamic properties");
 		DETACHED = new Option(shortPrefix + "d", longPrefix + "detached", false, "Start detached");
-		LOG.warn(">>>>>int FlYaSeCli");
+		LOG.warn(">>>>>in FlYaSeCli constructor");
 		LOG.warn(">>>>>DETACHED: " + DETACHED.getValue());
 		STREAMING = new Option(shortPrefix + "st", longPrefix + "streaming", false, "Start Flink in streaming mode");
 		NAME = new Option(shortPrefix + "nm", longPrefix + "name", true, "Set a custom name for the application on YARN");
@@ -162,6 +162,7 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		ALL_OPTIONS.addOption(NAME);
 		ALL_OPTIONS.addOption(APPLICATION_ID);
 		ALL_OPTIONS.addOption(ZOOKEEPER_NAMESPACE);
+		LOG.warn(">>>>>detachedMode: " + detachedMode);
 	}
 
 

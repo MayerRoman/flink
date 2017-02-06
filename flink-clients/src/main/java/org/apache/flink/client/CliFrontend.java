@@ -1219,6 +1219,8 @@ public class CliFrontend {
 			}
 
 			Constructor<? extends CustomCommandLine> constructor = customCliClass.getConstructor(types);
+			LOG.warn(">>>>>in loadCustomCommandLine");
+			LOG.warn(">>>>>params: " + params);
 			final CustomCommandLine cli = constructor.newInstance(params);
 
 			customCommandLine.add(cli);
