@@ -107,7 +107,7 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 	 * The parallelism is requested at the YARN client (-ys).
 	 */
 	@Test
-	public void perJobYarnCluster() {
+	public void perJobYarnCluster1() {
 		LOG.info("Starting perJobYarnCluster()");
 		addTestAppender(JobClient.class, Level.INFO);
 		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"} , "streaming")); // exclude streaming wordcount here.
@@ -124,6 +124,30 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
 			RunTypes.CLI_FRONTEND, 0, true);
 		LOG.info("Finished perJobYarnCluster()");
+	}
+
+	@Test
+	public void perJobYarnCluster2() {
+		LOG.info("Starting perJobYarnClusterWithParallelism()");
+		// write log messages to stdout as well, so that the runWithArgs() method
+		// is catching the log output
+		addTestAppender(JobClient.class, Level.INFO);
+		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"}, "streaming")); // exclude streaming wordcount here.
+		Assert.assertNotNull("Could not find wordcount jar", exampleJarLocation);
+		runWithArgs(new String[]{"run",
+				"-p", "2", //test that the job is executed with a DOP of 2
+				"-m", "yarn-cluster",
+				"-yj", flinkUberjar.getAbsolutePath(),
+				"-yt", flinkLibFolder.getAbsolutePath(),
+				"-yn", "1",
+				"-yjm", "768",
+				"-ytm", "1024", exampleJarLocation.getAbsolutePath()},
+				/* test succeeded after this string */
+			"Job execution complete",
+			/* prohibited strings: (we want to see "DataSink (...) (2/2) switched to FINISHED") */
+			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
+			RunTypes.CLI_FRONTEND, 0, true);
+		LOG.info("Finished perJobYarnClusterWithParallelism()");
 	}
 
 
@@ -330,30 +354,29 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 	/**
 	 * Test per-job yarn cluster with the parallelism set at the CliFrontend instead of the YARN client.
 	 */
-	@Test
+//	@Test
 //	public void perJobYarnClusterWithParallelism() {
-	public void perJobYarnCluster2() {
-		LOG.info("Starting perJobYarnClusterWithParallelism()");
-		// write log messages to stdout as well, so that the runWithArgs() method
-		// is catching the log output
-		addTestAppender(JobClient.class, Level.INFO);
-		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"}, "streaming")); // exclude streaming wordcount here.
-		Assert.assertNotNull("Could not find wordcount jar", exampleJarLocation);
-		runWithArgs(new String[]{"run",
-				"-p", "2", //test that the job is executed with a DOP of 2
-				"-m", "yarn-cluster",
-				"-yj", flinkUberjar.getAbsolutePath(),
-				"-yt", flinkLibFolder.getAbsolutePath(),
-				"-yn", "1",
-				"-yjm", "768",
-				"-ytm", "1024", exampleJarLocation.getAbsolutePath()},
-				/* test succeeded after this string */
-			"Job execution complete",
-			/* prohibited strings: (we want to see "DataSink (...) (2/2) switched to FINISHED") */
-			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
-			RunTypes.CLI_FRONTEND, 0, true);
-		LOG.info("Finished perJobYarnClusterWithParallelism()");
-	}
+//		LOG.info("Starting perJobYarnClusterWithParallelism()");
+//		// write log messages to stdout as well, so that the runWithArgs() method
+//		// is catching the log output
+//		addTestAppender(JobClient.class, Level.INFO);
+//		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"}, "streaming")); // exclude streaming wordcount here.
+//		Assert.assertNotNull("Could not find wordcount jar", exampleJarLocation);
+//		runWithArgs(new String[]{"run",
+//				"-p", "2", //test that the job is executed with a DOP of 2
+//				"-m", "yarn-cluster",
+//				"-yj", flinkUberjar.getAbsolutePath(),
+//				"-yt", flinkLibFolder.getAbsolutePath(),
+//				"-yn", "1",
+//				"-yjm", "768",
+//				"-ytm", "1024", exampleJarLocation.getAbsolutePath()},
+//				/* test succeeded after this string */
+//			"Job execution complete",
+//			/* prohibited strings: (we want to see "DataSink (...) (2/2) switched to FINISHED") */
+//			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
+//			RunTypes.CLI_FRONTEND, 0, true);
+//		LOG.info("Finished perJobYarnClusterWithParallelism()");
+//	}
 
 	/**
 	 * Test a fire-and-forget job submission to a YARN cluster.
