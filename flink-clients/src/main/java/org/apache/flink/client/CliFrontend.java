@@ -132,7 +132,7 @@ public class CliFrontend {
 		//	to prefix all options with y/yarn.
 		//	Tips: DefaultCLI must be added at last, because getActiveCustomCommandLine(..) will get the
 		//	      active CustomCommandLine in order and DefaultCLI isActive always return true.
-		LOG.warn(">>>>>>in static block");
+		LOG.warn(">>>>>>>in static block");
 		loadCustomCommandLine("org.apache.flink.yarn.cli.FlinkYarnSessionCli", "y", "yarn");
 		loadCustomCommandLine("org.apache.flink.yarn.cli.FlinkYarnCLI", "y", "yarn");
 		customCommandLine.add(new DefaultCLI());
@@ -157,6 +157,7 @@ public class CliFrontend {
 	public CliFrontend(String configDir) throws Exception {
 
 		LOG.warn(">>>>>> in constructor");
+		LOG.warn(">>>>>> CliFrotend instance: " + this);
 		// configure the config directory
 		File configDirectory = new File(configDir);
 		LOG.info("Using configuration directory " + configDirectory.getAbsolutePath());

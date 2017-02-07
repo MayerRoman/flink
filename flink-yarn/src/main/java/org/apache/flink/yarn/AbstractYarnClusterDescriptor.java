@@ -344,7 +344,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	}
 
 	public void setDetachedMode(boolean detachedMode) {
-		LOG.warn(">>>>>setting " +detachedMode + "in setDetachedMode");
+		LOG.warn(">>>>>setting " +detachedMode + " in setDetachedMode");
 		this.detached = detachedMode;
 	}
 
