@@ -330,6 +330,10 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		if (cmd.hasOption(DETACHED.getOpt()) || cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt())) {
 			this.detachedMode = true;
 			yarnClusterDescriptor.setDetachedMode(true);
+		} else {
+			if (System.getenv("IN_TESTS") != null && this.detachedMode) {
+				this.detachedMode = false;
+			}
 		}
 
 		if(cmd.hasOption(NAME.getOpt())) {

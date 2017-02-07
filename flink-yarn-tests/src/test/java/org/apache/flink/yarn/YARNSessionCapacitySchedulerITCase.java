@@ -339,7 +339,7 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 		File exampleJarLocation = YarnTestBase.findFile("..", new ContainsName(new String[] {"-WordCount.jar"}, "streaming")); // exclude streaming wordcount here.
 		Assert.assertNotNull("Could not find wordcount jar", exampleJarLocation);
 		runWithArgs(new String[]{"run",
-				"-p", "1", //test that the job is executed with a DOP of 2
+				"-p", "2", //test that the job is executed with a DOP of 2
 				"-m", "yarn-cluster",
 				"-yj", flinkUberjar.getAbsolutePath(),
 				"-yt", flinkLibFolder.getAbsolutePath(),
@@ -349,7 +349,7 @@ public class YARNSessionCapacitySchedulerITCase extends YarnTestBase {
 				/* test succeeded after this string */
 			"Job execution complete",
 			/* prohibited strings: (we want to see "DataSink (...) (2/2) switched to FINISHED") */
-			new String[]{"DataSink \\(.*\\) \\(2/2\\) switched to FINISHED"},
+			new String[]{"DataSink \\(.*\\) \\(1/1\\) switched to FINISHED"},
 			RunTypes.CLI_FRONTEND, 0, true);
 		LOG.info("Finished perJobYarnClusterWithParallelism()");
 	}
