@@ -327,14 +327,8 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 
 		yarnClusterDescriptor.setDynamicPropertiesEncoded(dynamicPropertiesEncoded);
 
-		if (cmd.hasOption(DETACHED.getOpt()) || cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt())) {
-			this.detachedMode = true;
-			yarnClusterDescriptor.setDetachedMode(true);
-		} else {
-			if (System.getenv("IN_TESTS") != null && this.detachedMode) {
-				this.detachedMode = false;
-			}
-		}
+		this.detachedMode = cmd.hasOption(DETACHED.getOpt()) || cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt());
+		yarnClusterDescriptor.setDetachedMode(this.detachedMode);
 
 		if(cmd.hasOption(NAME.getOpt())) {
 			yarnClusterDescriptor.setName(cmd.getOptionValue(NAME.getOpt()));
