@@ -242,8 +242,10 @@ public class YarnClusterClient extends ClusterClient {
 
 	@Override
 	protected JobSubmissionResult submitJob(JobGraph jobGraph, ClassLoader classLoader) throws ProgramInvocationException {
+		LOG.warn(">>>>> detached: " + isDetached());
 		if (isDetached()) {
 			if (newlyCreatedCluster) {
+				LOG.warn(">>>>> calling commitDeploy");
 				clusterDescriptor.commitDeploy(yarnClient, this);
 				stopAfterJob(jobGraph.getJobID());
 			}

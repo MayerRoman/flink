@@ -249,6 +249,8 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 
 	public AbstractYarnClusterDescriptor createDescriptor(String defaultApplicationName, CommandLine cmd) {
 
+		LOG.warn(">>>>>> in createDescriptor");
+
 		AbstractYarnClusterDescriptor yarnClusterDescriptor = getClusterDescriptor();
 
 		if (!cmd.hasOption(CONTAINER.getOpt())) { // number of containers is required option!
@@ -327,6 +329,12 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 
 		yarnClusterDescriptor.setDynamicPropertiesEncoded(dynamicPropertiesEncoded);
 
+		LOG.warn(">>>>>cmd.hasOption(DETACHED.getOpt()): " + cmd.hasOption(DETACHED.getOpt()));
+		LOG.warn(">>>>>cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt()): " + cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt()));
+
+		LOG.warn(">>>>>>System.getenv(\"IN_TESTS\") != null: " + (System.getenv("IN_TESTS") != null));
+
+
 		if (cmd.hasOption(DETACHED.getOpt()) || cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt())) {
 			this.detachedMode = true;
 			yarnClusterDescriptor.setDetachedMode(true);
@@ -335,6 +343,10 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 				this.detachedMode = false;
 			}
 		}
+
+		LOG.warn(">>>>>this.detachedMode after if: " + this.detachedMode);
+
+		LOG.warn(">>>>>yarnClusterDescriptor.isDetachedMode(): " + yarnClusterDescriptor.isDetachedMode());
 
 		if(cmd.hasOption(NAME.getOpt())) {
 			yarnClusterDescriptor.setName(cmd.getOptionValue(NAME.getOpt()));
@@ -538,16 +550,23 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 			CommandLine cmdLine,
 			Configuration config,
 			List<URL> userJarFiles) {
+		LOG.warn(">>>>>>in createCluster before createDescriptor");
+		LOG.warn(">>>>>detachedMode: " + detachedMode);
 		Preconditions.checkNotNull(userJarFiles, "User jar files should not be null.");
 
 		AbstractYarnClusterDescriptor yarnClusterDescriptor = createDescriptor(applicationName, cmdLine);
 		yarnClusterDescriptor.setFlinkConfiguration(config);
 		yarnClusterDescriptor.setProvidedUserJarFiles(userJarFiles);
 
+		LOG.warn(">>>>>>in createCluster after createDescriptor");
+		LOG.warn(">>>>>detachedMode: " + detachedMode);
+
 		try {
 			if (detachedMode) {
+				LOG.warn(">>>>>> calling yarnClusterDescriptor.prepareToDeploy");
 				return yarnClusterDescriptor.prepareToDeploy();
 			}else {
+				LOG.warn(">>>>>> calling yarnClusterDescriptor.deploy");
 				return yarnClusterDescriptor.deploy();
 			}
 		} catch (Exception e) {
