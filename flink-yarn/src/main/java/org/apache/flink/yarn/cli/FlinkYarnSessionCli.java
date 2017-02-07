@@ -330,6 +330,10 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		if (cmd.hasOption(DETACHED.getOpt()) || cmd.hasOption(CliFrontendParser.DETACHED_OPTION.getOpt())) {
 			this.detachedMode = true;
 			yarnClusterDescriptor.setDetachedMode(true);
+		} else {
+			if (System.getenv("IN_TESTS") != null && this.detachedMode) {
+				this.detachedMode = false;
+			}
 		}
 
 		if(cmd.hasOption(NAME.getOpt())) {
@@ -541,7 +545,11 @@ public class FlinkYarnSessionCli implements CustomCommandLine<YarnClusterClient>
 		yarnClusterDescriptor.setProvidedUserJarFiles(userJarFiles);
 
 		try {
-			return yarnClusterDescriptor.deploy();
+			if (detachedMode) {
+				return yarnClusterDescriptor.prepareToDeploy();
+			}else {
+				return yarnClusterDescriptor.deploy();
+			}
 		} catch (Exception e) {
 			throw new RuntimeException("Error deploying the YARN cluster", e);
 		}

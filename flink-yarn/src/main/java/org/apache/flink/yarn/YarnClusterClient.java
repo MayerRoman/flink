@@ -82,14 +82,21 @@ public class YarnClusterClient extends ClusterClient {
 	private final AbstractYarnClusterDescriptor clusterDescriptor;
 	private final LazApplicationClientLoader applicationClient;
 	private final FiniteDuration akkaDuration;
-	private final ApplicationReport appReport;
-	private final ApplicationId appId;
-	private final String trackingURL;
+
+	private ApplicationReport appReport;
+	private ApplicationId appId;
+	private String trackingURL;
 
 	private boolean isConnected = true;
 
 	/** Indicator whether this cluster has just been created */
 	private final boolean newlyCreatedCluster;
+
+	/**
+	 * Determines whether PollingRunner created and launched in the constructor.
+	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
+	 */
+	private boolean startPollingRunner;
 
 	/**
 	 * Create a new Flink on YARN cluster.
@@ -100,6 +107,7 @@ public class YarnClusterClient extends ClusterClient {
 	 * @param flinkConfig Flink configuration
 	 * @param sessionFilesDir Location of files required for YARN session
 	 * @param newlyCreatedCluster Indicator whether this cluster has just been created
+	 * @param startPollingRunner Determines whether PollingRunner created and launched in the constructor
 	 * @throws IOException
 	 * @throws YarnException
 	 */
@@ -109,7 +117,8 @@ public class YarnClusterClient extends ClusterClient {
 		final ApplicationReport appReport,
 		org.apache.flink.configuration.Configuration flinkConfig,
 		Path sessionFilesDir,
-		boolean newlyCreatedCluster) throws IOException, YarnException {
+		boolean newlyCreatedCluster,
+		boolean startPollingRunner) throws IOException, YarnException {
 
 		super(flinkConfig);
 
@@ -118,18 +127,50 @@ public class YarnClusterClient extends ClusterClient {
 		this.yarnClient = yarnClient;
 		this.hadoopConfig = yarnClient.getConfig();
 		this.sessionFilesDir = sessionFilesDir;
-		this.appReport = appReport;
-		this.appId = appReport.getApplicationId();
-		this.trackingURL = appReport.getTrackingUrl();
+
+		if (appReport != null) {
+			this.appReport = appReport;
+			this.appId = appReport.getApplicationId();
+			this.trackingURL = appReport.getTrackingUrl();
+		}
+
 		this.newlyCreatedCluster = newlyCreatedCluster;
 
 		this.applicationClient = new LazApplicationClientLoader(flinkConfig, actorSystemLoader);
 
+		this.startPollingRunner = startPollingRunner;
+
+		if(startPollingRunner) {
+			createAndStartPollingRunner();
+		}
+
+		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
+	}
+
+	void setAppReport(ApplicationReport appReport) {
+		this.appReport = appReport;
+		this.appId = appReport.getApplicationId();
+		this.trackingURL = appReport.getTrackingUrl();
+	}
+
+	/**
+	 * It is used to delay the deployment of the cluster in the case of launching detached jobs.
+	 */
+	void createAndStartPollingRunner() {
 		this.pollingRunner = new PollingThread(yarnClient, appId);
 		this.pollingRunner.setDaemon(true);
 		this.pollingRunner.start();
+		this.startPollingRunner = true;
+	}
 
-		Runtime.getRuntime().addShutdownHook(clientShutdownHook);
+	private void stopPollingRunner() {
+		try {
+			pollingRunner.stopRunner();
+			pollingRunner.join(1000);
+		} catch(InterruptedException e) {
+			LOG.warn("Shutdown of the polling runner was interrupted", e);
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	/**
@@ -153,15 +194,15 @@ public class YarnClusterClient extends ClusterClient {
 			// we are already in the shutdown hook
 		}
 
-		try {
-			pollingRunner.stopRunner();
-			pollingRunner.join(1000);
-		} catch(InterruptedException e) {
-			LOG.warn("Shutdown of the polling runner was interrupted", e);
-			Thread.currentThread().interrupt();
+		if (startPollingRunner) {
+			stopPollingRunner();
 		}
 
 		isConnected = false;
+
+		LOG.info("YARN Client is shutting down");
+		yarnClient.stop(); // actorRunner is using the yarnClient.
+		yarnClient = null; // set null to clearly see if somebody wants to access it afterwards.
 	}
 
 
@@ -203,6 +244,7 @@ public class YarnClusterClient extends ClusterClient {
 	protected JobSubmissionResult submitJob(JobGraph jobGraph, ClassLoader classLoader) throws ProgramInvocationException {
 		if (isDetached()) {
 			if (newlyCreatedCluster) {
+				clusterDescriptor.commitDeploy(yarnClient, this);
 				stopAfterJob(jobGraph.getJobID());
 			}
 			return super.runDetached(jobGraph, classLoader);
@@ -400,13 +442,7 @@ public class YarnClusterClient extends ClusterClient {
 			LOG.warn("Session file directory not set. Not deleting session files");
 		}
 
-		try {
-			pollingRunner.stopRunner();
-			pollingRunner.join(1000);
-		} catch(InterruptedException e) {
-			LOG.warn("Shutdown of the polling runner was interrupted", e);
-			Thread.currentThread().interrupt();
-		}
+		stopPollingRunner();
 
 		try {
 			ApplicationReport appReport = yarnClient.getApplicationReport(appId);

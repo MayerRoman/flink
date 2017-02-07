@@ -20,6 +20,7 @@ package org.apache.flink.yarn;
 
 import org.apache.flink.client.CliFrontend;
 import org.apache.flink.client.deployment.ClusterDescriptor;
+import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.configuration.IllegalConfigurationException;
@@ -100,6 +101,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	private static final int MIN_TM_MEMORY = 768;
 
 	private Configuration conf = new YarnConfiguration();
+
+	private YarnClientApplication yarnApplication;
 
 	/**
 	 * Files (usually in a distributed file system) used for the YARN session of Flink.
@@ -399,7 +402,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			flinkConfiguration.setString(ConfigConstants.JOB_MANAGER_IPC_ADDRESS_KEY, appReport.getHost());
 			flinkConfiguration.setInteger(ConfigConstants.JOB_MANAGER_IPC_PORT_KEY, appReport.getRpcPort());
 
-			return createYarnClusterClient(this, yarnClient, appReport, flinkConfiguration, sessionFilesDir, false);
+			return createYarnClusterClient(this, yarnClient, appReport, flinkConfiguration, sessionFilesDir, false, true);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't retrieve Yarn cluster", e);
 		}
@@ -408,29 +411,36 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	@Override
 	public YarnClusterClient deploy() {
 		try {
-			if(UserGroupInformation.isSecurityEnabled()) {
-				// note: UGI::hasKerberosCredentials inaccurately reports false
-				// for logins based on a keytab (fixed in Hadoop 2.6.1, see HADOOP-10786),
-				// so we check only in ticket cache scenario.
-				boolean useTicketCache = flinkConfiguration.getBoolean(SecurityOptions.KERBEROS_LOGIN_USETICKETCACHE);
-				UserGroupInformation loginUser = UserGroupInformation.getCurrentUser();
-				if (useTicketCache && !loginUser.hasKerberosCredentials()) {
-					LOG.error("Hadoop security is enabled but the login user does not have Kerberos credentials");
-					throw new RuntimeException("Hadoop security is enabled but the login user " +
-							"does not have Kerberos credentials");
-				}
-			}
-			return deployInternal();
+			checkKerberosCredentials();
+
+			YarnClient yarnClient = prepareToDeployInternal();
+
+			ApplicationReport report = commitDeployInternal(yarnClient);
+
+			// the Flink cluster is deployed in YARN. Represent cluster
+			return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true, true);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't deploy Yarn cluster", e);
 		}
 	}
 
 	/**
-	 * This method will block until the ApplicationMaster/JobManager have been
-	 * deployed on YARN.
+	 * Preparing for deployment on YARN:
+	 * checks given parameters,
+	 * check the availability of the necessary resources.
+	 * It should be used in conjunction with commitDeploy.
 	 */
-	protected YarnClusterClient deployInternal() throws Exception {
+	public  YarnClusterClient prepareToDeploy(){
+		try {
+			checkKerberosCredentials();
+			YarnClient yarnClient = prepareToDeployInternal();
+			return createYarnClusterClient(this, yarnClient, null, flinkConfiguration, sessionFilesDir, true, false);
+		} catch (Exception e) {
+			throw new RuntimeException("Couldn't prepare to deploy Yarn cluster", e);
+		}
+	}
+
+	private YarnClient prepareToDeployInternal() throws Exception {
 		isReadyForDeployment();
 		LOG.info("Using values:");
 		LOG.info("\tTaskManager count = {}", taskManagerCount);
@@ -497,7 +507,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		}
 
 		// Create application via yarnClient
-		final YarnClientApplication yarnApplication = yarnClient.createApplication();
+		yarnApplication = yarnClient.createApplication();
 		GetNewApplicationResponse appResponse = yarnApplication.getNewApplicationResponse();
 
 		Resource maxRes = appResponse.getMaximumResourceCapability();
@@ -554,6 +564,28 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			}
 		}
 
+		return yarnClient;
+	}
+
+	/**
+	 * Triggers Flink on YARN deployment.
+	 * This method will block until the ApplicationMaster/JobManager have been
+	 * deployed on YARN.
+	 * It should be used in conjunction with prepareToDeploy.
+	 */
+	public void commitDeploy(YarnClient yarnClient, YarnClusterClient yarnClusterClient) throws ProgramInvocationException {
+		try {
+			ApplicationReport report = commitDeployInternal(yarnClient);
+
+			yarnClusterClient.setAppReport(report);
+			yarnClusterClient.createAndStartPollingRunner();
+
+		} catch (Exception e) {
+			throw new ProgramInvocationException("Couldn't deploy Yarn cluster", e);
+		}
+	}
+
+	private ApplicationReport commitDeployInternal(YarnClient yarnClient) throws Exception {
 		ApplicationReport report = startAppMaster(null, yarnClient, yarnApplication);
 
 		String host = report.getHost();
@@ -563,8 +595,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		flinkConfiguration.setString(ConfigConstants.JOB_MANAGER_IPC_ADDRESS_KEY, host);
 		flinkConfiguration.setInteger(ConfigConstants.JOB_MANAGER_IPC_PORT_KEY, port);
 
-		// the Flink cluster is deployed in YARN. Represent cluster
-		return createYarnClusterClient(this, yarnClient, report, flinkConfiguration, sessionFilesDir, true);
+		return report;
 	}
 
 	public ApplicationReport startAppMaster(JobGraph jobGraph, YarnClient yarnClient, YarnClientApplication yarnApplication) throws Exception {
@@ -922,6 +953,21 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		return report;
 	}
 
+	private void checkKerberosCredentials() throws Exception {
+		if(UserGroupInformation.isSecurityEnabled()) {
+			// note: UGI::hasKerberosCredentials inaccurately reports false
+			// for logins based on a keytab (fixed in Hadoop 2.6.1, see HADOOP-10786),
+			// so we check only in ticket cache scenario.
+			boolean useTicketCache = flinkConfiguration.getBoolean(SecurityOptions.KERBEROS_LOGIN_USETICKETCACHE);
+			UserGroupInformation loginUser = UserGroupInformation.getCurrentUser();
+			if (useTicketCache && !loginUser.hasKerberosCredentials()) {
+				LOG.error("Hadoop security is enabled but the login user does not have Kerberos credentials");
+				throw new RuntimeException("Hadoop security is enabled but the login user " +
+					"does not have Kerberos credentials");
+			}
+		}
+	}
+
 	/**
 	 * Kills YARN application and stops YARN client.
 	 *
@@ -1234,14 +1280,16 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			ApplicationReport report,
 			org.apache.flink.configuration.Configuration flinkConfiguration,
 			Path sessionFilesDir,
-			boolean perJobCluster) throws IOException, YarnException {
+			boolean perJobCluster,
+			boolean startPollingRunner) throws IOException, YarnException {
 		return new YarnClusterClient(
 			descriptor,
 			yarnClient,
 			report,
 			flinkConfiguration,
 			sessionFilesDir,
-			perJobCluster);
+			perJobCluster,
+			startPollingRunner);
 	}
 }
 
